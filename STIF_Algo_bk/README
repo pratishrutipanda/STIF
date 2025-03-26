@@ -1,0 +1,260 @@
+STIF algorithm: 
+
+There are 4 sub-directories in the “STIF_HMM_package"
+
+1)HMM_package - HMM_algorithm which we have standardised and used for stress TFBS detection.
+2)sequence - Sequence preparation.
+3)TFBS - TFBS preparation.
+4)files - They have the whole genome sequences, validation sequences, stress consensus file used in this stress TFBS 
+detection.
+
+Note: If we are stuck in between & dont know to run the program, simply run "perl x.pl" & it will tell us what should we 
+type. The command to be run in terminal are given as the following --> "**********$" in this 'README' file. Please dont copy
+or shift any files from its appropriate place especially the programs should not be shifted.
+
+First to begin with, we have to use "sequence" & "TFBS" sub-directories
+_________________________________________________________________________________________________________________________
+sequence:
+---------
+In the "sequence" sub-directory, there are 3 more sub-directories,
+i) sam 	- This directory has the sample files & perl program to run.
+ii) work- These are the same files but the whole genome files are present.
+iii) more_entries - This directory helps us to divide the full no: of query sequence into small nos of sequence in separate
+files as how we give the number.
+
+This "sequence" directory is to prepare the sequence from the given query list of accession nos. There are 2 perl files in 
+"sam" and "work". The "seq_inp_HMM_UTRmerging.pl" program merges the utr & upstream regions according to the given query of
+list of accession nos. For some of the genes, there may be no utr region, so for those, genes will not be present in the 
+output. Only the genes which have both UTR and UPSTREAM regions according to the query list will be present in the output
+file.
+ 
+The "seq_inp_HMM_onlyupstream.pl" program gives only the upstream regions from the query of list.
+
+If we run perl program, as 
+**********$ perl seq_inp_HMM_UTRmerging.pl
+Then it will tell us, the input files to be given. So The perl program is processed in "whole_HMM_package/sequence/sam/" as
+
+**********$ perl seq_inp_HMM_UTRmerging.pl and sam_utr listen
+As the number of inputs are very limited, we can see the output in the terminal, but for more number of input files, we can 
+give as
+
+Note:The list of the query of acession nos should be given in CAPITAL letters.
+
+**********$ perl seq_inp_HMM_UTRmerging.pl sam_upstream sam_utr list > output.seq
+
+For eg) In the given list, we have 4 acc-no present in the upstream but only 3 of them are present in the UTR file in the 
+"whole_HMM_package/sequence/sam/" directory. If we run the program "seq_inp_HMM_UTRmerging.pl", then we will get 3 genes in
+the output. For remaining or missed file, pick that acc-no alone and put in another list for the input of the next program.
+
+As these sample files are too small in nos, it is easy to pick those remaining one sequence, but for large no: of sequences,
+the diff--> linux command can be used.
+But please be careful of the space and CAPITAl letters of accession nos. So to find out the no: of acc-nos, here we know that
+full list of acc-no are in the "list" file. And the ouput of only merged utr & upstream sequnces are in the the "output.seq"
+file. So first we have to get the acc-no of "output.seq"
+
+**********$ grep ">" output.seq | cut -d " " -f 1 | cut -d ">" -f 2 > output.seq_acc
+
+The acc-no of the "output.seq" file is now present in output.seq_acc. For grep & cut command please go through the manual.
+
+Now to take out the difference between 2 files, we can use 
+
+**********$ sort output.seq_acc | uniq > 1
+**********$ sort sort list | uniq > 2
+**********$ diff 1 2 > chk
+
+If you read the manual for diff, then we can understand the symbols used in the "chk" file. But basically, the acc-no 
+mentioned in the "chk" file are those for which we didnt get output from "seq_inp_HMM_UTRmerging.pl". So these acc-no 
+present can be taken by grep & cut command as
+
+**********$ grep "AT" chk | cut -d " " -f 2 > list_upstream_alone
+
+So now we have the list of acc-no as "list_upstream_alone" for which we TAIR dont have utr region.So next program has to be
+processed
+
+**********$ perl seq_inp_HMM_onlyupstream.pl sam_upstream list_upstream_alone > output1.seq
+
+Then merge them as
+
+**********$ cat output.seq output1.seq > full.seq
+
+So this how, our sequence of 1000bp+5UTR gets ready in this directory.
+
+After all this, we can still check the number of full.seq by grep command as 
+
+**********$ grep -c ">" full.seq
+
+If still, this number is not equal to our earlier list then, these acc-nos are not present in the TAIR genome itself. So we 
+can ignore them.
+
+If we have more sequences than 50, then it is better to divide those 50 or 50+ into 40 sequences in a file for the rest of 
+the programs.To divide into small parts, we can copy our sequence files to "more_entries" sub-directory.
+
+Inside this sub-directory, there are 2 programs. First just see the no of sample sequence "sam.seq", these are 10.
+
+**********$ perl sep_seq.pl sam.seq 3 > inp
+
+Then this "inp" is given to another program as 
+
+**********$ perl separating.pl inp 
+The query_sequence are divided into 3 sequences in each file which is present in "seq_files" sub-directory. 
+_________________________________________________________________________________________________________________________
+TFBS:
+-----
+The "TFBS" sub-directory has the sample files to work & tells how to create the consensus(TFBS file).
+
+"sam.con" has the sample consensus of TFBS and this file is the input file to "TFBS_JAckknif.pl".
+
+**********$ perl TFBS_JAckknif.pl sam.con
+
+The output contains the profile of this particular consensus and this algorithm also includes Jackknifing method. 
+
+JACKKNIFE ALGORITHM:
+This algorithm basically deletes one consensus and calculates the HMM score of the remaining consensus and finally it is 
+divided by the length of the consensus.
+So we have to take the threshold & maximum of the Jackniffing models which are given finally.
+Then we have to manually enter the comment line for each set of consensus as
+"FACTOR=TFBSname_FAMILYname	FAMILY=FAMILYname               THRESHOLD=1.8731        MAXIMUM=1.8731"
+
+Note: This line is very important for rest of the HMM algorithm,and we can merge the TFBS name & FAMILY name with 
+underscore(_) under FACTOR, because the rest of the programs searches only for the word FACTOR and the rest of the words 
+in the comment line ie) FAMILY name, threshold etc cant be seen.
+
+So in this directory, we can create consensus file.
+_________________________________________________________________________________________________________________________
+HMM_package:
+-----------
+We have 2 files(sequence and TFBS consensus) ready for "HMM_package" directory.
+
+Copy these 2 files(sequence and TFBS consensus) in the sub-directory(HMM_package). There are many ".sh" files & consensus
+file which has all the consensus used for stress detection.
+
+Note: Please copy the query files(sequence & consensus(if you have prepared, or this "HMM_package" sub-directory itself has
+"consensus" file)) to the HMM_package sub-directory. And in this sub-directory, all the rest programs are processed. 
+So please dont shift any programs from this sub-directory.
+
+These shell programs are numbered as name_1.sh, name_2.sh. So the order of running the pgm are numbered as how the .sh file 
+are numbered. Some programs are for 1000bp and some are for 100bp. While running the .sh files, it will ask many questions.
+
+The order of the program to be processed is as follows
+
+1000bp & 1000bp+5'UTR				100bp & 100bp+5'UTR
+---------------------				--------------------
+i) 1000_seq_1.sh				i)100_seq_1.sh	
+ii)pgm_1000_2.sh				ii)pgm_100_2.sh
+iii)chk_3.sh					iii)chk_3.sh
+iv)zscore_4.sh					iv)zscore_4.sh
+v)normal_5.sh					v)normal_5.sh
+
+The files are also named as accordingly and the logic is same for both 100bp & 1000bp but these files are separated because
+in the output the chromosomal position and UTR regions is the only change between these 2 programs. If we run x_100.pl for 
+1000bp then, the output for HMM score, zscores will all be same but only utr regions and the chromosomal positions will 
+differ. So even if our output is wrong, we can make out our error.
+
+To begin with, if we want to start with 1000bp, then our sequence from "whole_HMM_package/sequence/sam/" has 1000bp+5UTR 
+regions. We can first change the name from "full.seq" to "full_1000_UTR.seq" as 
+
+**********$ mv full.seq full_1000_UTR.seq
+
+Now lets start, we already have full_1000_UTR.seq and consensus in this sub-directory. First
+
+**********$ sh 1000_seq_1.sh
+QUES 1	: Type the 1000+5UTR seq_file to split FWD & REV as separate files
+TYPE	: full_1000_UTR.seq
+Then this program will say your output file placed path.
+These are in "seq" sub-directory. Then copy those files from "seq" sub-directory to thw working directory as
+
+**********$ cp seq/* .
+
+So we will get forward and reverse splited sequence files from the main "full_1000_UTR.seq" query file.
+
+Now second program,
+
+**********$ sh pgm_1000_2.sh
+QUES 1	: Type the directory name where your output files has to be placed
+TYPE	: full_1000_UTR
+QUES 2	: Type the sequence file name which has both FWD & REV seq
+TYPE	: full_1000_UTR.seq
+QUES 3	: Type the sequence file name which has FWD alone
+TYPE	: full_1000_UTR.seq.fwd_1000+utr
+QUES 4	: Type the sequence file name which has REV alone
+TYPE	: full_1000_UTR.seq.rev_1000+utr
+QUES 5	: Type the consensus file name
+TYPE	: consensus
+3 output files will be generated from this program and this program alone takes much time comparing than others. The path of
+the output files generated by this program will be given after typing "consensus". 
+To check whether the program has been finished or not just check with the "top" command.
+We can give any directory name to start with, but for full calcaluation, the same directory name has to be used.
+
+OUTPUT Explanation: 
+The output in -> "full_1000_UTR/valid_slides/forward/full_1000_UTR.seq.fwd_1000+utr.out" are from HMM
+program only for Forward sequence. This output tells HMM-score only for the exact match of the query sequence and likewise 
+the output in -> "full_1000_UTR/valid_slides/forward/full_1000_UTR.seq.rev_1000+utr.out" are from HMM program only for 
+Reverse sequence.
+The third output in -> "full_1000_UTR/full_slides/output1/x_full" are all overlaping window_slides for each query sequence 
+according to consensus-mers file. 
+So as we have 19 consensus, so the directory "full_1000_UTR/full_slides/output1/" should have 19 files. And in each of the 
+19 files named as "TFBSname_full" will have HMM-score for all sliding window slides of 4 stress gene query as in 
+"full_1000_UTR.seq".
+
+To run this sample program, it takes 6 minutes to finish. So for ensuring more, we can go for third program,
+
+**********$ sh chk_3.sh
+QUES 1  : Type the directory name to check the your output files
+TYPE	: full_1000_UTR
+QUES 2  : Type the sequence file name which has FWD alone
+TYPE	: full_1000_UTR.seq.fwd_1000+utr
+QUES 3  : Type the sequence file name which has REV alone
+TYPE	: full_1000_UTR.seq.rev_1000+utr
+QUES 4  : Type the consensus file name
+TYPE	: consensus
+After typing for every questions, the number will be displayed, if the numbers are displyed alike, then the whole program
+is fully completed. So if the numbers not alike, that means, the program is still under process. And better we can check with
+"top" command.
+
+Then for zscore calculation, 
+
+**********$ sh zscore_4.sh
+QUES 1  : Type the directory for which zscores calculation has to be done
+TYPE    : full_1000_UTR
+Then this program will calculate for zscores for every sequence present in the query sequence file. 
+The Z-SCORE formula is Z-SCORE - (score-mean)/std deviation.
+In this formula, the HMM-score of the exact match of TFBS-consensus file in query is accounted for the score of Z-SCORE.
+For mean & std deviation of Z-SCORE, the mean and standard deviation of HMM-score of all sliding windows of query sequence
+will be taken into account.
+
+Then the zscore is calculated. The zscore output files are present in the "full_1000_UTR/zscores/zsco_output_files/x.zsco".
+
+As we have finished off for all sets of zscores, then create a separate directory for "all_zscores" and copy all "*.zsco" 
+files from "given_directory_name/zscores/zsco_output/*.zsco" to "all_zscores". So for this whole library of files, the 
+normalization is calculated.
+
+**********$ sh normal_5.sh
+QUES 1  : Type the directory name to calculate normalization for your all zscore files
+TYPE	: all_zscore
+Then the output will be generated in the "all_zscore" directory as normal.output
+
+OUTPUT EXPLANATION :
+					Top 1st rank of zscore of binding site for that TF and that stress gene
+         			     ---------------------------------------------------------------------------
+			 				Total No: of binding sites for that TF
+The normalization formula is	     ---------------------------------------------------------------------------
+					     Total no: of binding sites for all TF library and stress gene	
+         			     ---------------------------------------------------------------------------
+					    Total no: of binding for all TF library and of all stress genes
+
+The 1st top zscore is alone taken for normalisation.
+There are some palindromic hits, so they are filtered by this program.
+
+If you use STIFDB, STIF Server or associated web services, please cite us:
+Khader Shameer, Oommen K. Mathew, Mahantesha BN Naika and Ramanathan Sowdhamini.(2015) Rapid prediction of plant stress responsive transcription factor binding sites from plant genomes using STIF algorithm. Manuscript in preparation  
+
+S. Ambika, Susan Mary Varghese, K. Shameer, M. Udayakumar and R. Sowdhamini (2008) STIF: Hidden Markov Model-based search algorithm for the recognition of binding sites of Stress-upregulated TranscrIption Factors and genes in Arabidopsis thaliana. Bioinformation, 2(10):431-437 [PMCID: PMC2561162] 
+
+K. Shameer, S. Ambika,Susan Mary Varghese,N. Karaba,M. Udayakumar and R. Sowdhamini1.(2009) STIFDB-Arabidopsis Stress Responsive Transcription Factor DataBase.Int J Plant Genomics. 2009; 2009: 583429 [PMCID: PMC2763139]
+
+Khader Shameer, Mahantesha BN Naika, Oommen K. Mathew, and Ramanathan Sowdhamini.(2014) POEAS: Automated Plant Phenomic Analysis Using Plant Ontology. Bioinformatics and Biology Insights 2014:8 209-214 10.4137/BBI.S19057. [PMID: 25574136]
+
+Mahantesha Naika, Khader Shameer, Oommen K. Mathew , Ramanjini Gowda and Ramanathan Sowdhamini. (2012) STIFDB2: An updated version of plant Stress Responsive TranscrIption Factor DataBase with additional stress singnals, stress responsive transcription factor binding sites and stress responsive genes in Arabidopsis and rice. Plant and Cell Physiology Plant Cell Physiol. 2013 Feb;54(2):e8. doi: 10.1093/pcp/pcs185.
+
+Mahantesha Naika, Khader Shameer and Ramanathan Sowdhamini (2013) Comparative analyses of stress-responsive genes in Arabidopsis thaliana: Insights from genomic data mining, functional enrichment, pathway analysis and phenomics. Mol. BioSyst.,9(7), 1888-1908.
+

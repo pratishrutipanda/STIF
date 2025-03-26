@@ -1,0 +1,34 @@
+ 2240  cd HMM_package/
+ 2241  ls
+ 2242  cp seq seq_old
+ 2243  cp -Rf seq seq_old
+ 2244  cd seq
+ 2245  ls
+ 2246  rm *
+ 2247  ls
+ 2248  cd ..
+ 2249  ls
+ 2250  sh 1000_seq_1.sh
+ 2251  rm -rf seq
+ 2252  sh 1000_seq_1.sh
+ 2253  ls
+ 2254  ls seq
+ 2255  cp ../../test.fasta .
+ 2256  sh 1000_seq_1.sh
+ 2257  ls seq
+ 2258  vi seq/test.fasta.fwd_1000+utr 
+ 2259  ls
+ 2260  cp seq/* .
+ 2261  mkdir full_1000_UTR_OM
+ 2262  sh pgm_1000_2.sh
+ 2263  ls full_1000_UTR_OM/
+ 2264  vi full_1000_UTR_OM/valid_slides/forward/test.fasta.fwd_1000+utr.out 
+ 2265  sh zscore_4.sh
+ 2266  ls
+ 2267  ls full_1000_UTR_OM/
+ 2268  ls full_1000_UTR_OM/zscores/
+ 2269  ls full_1000_UTR_OM/zscores/zsco_output_files/
+ 2270  mkdir all_zscore_OM
+ 2271  cp full_1000_UTR_OM/zscores/zsco_output_files/AT3G14990.zsco all_zscore_OM/.
+ 2272  sh normal_5.sh
+ 2273  vi all_zscore_OM/normal.output 
